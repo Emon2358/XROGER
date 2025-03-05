@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Advanced TB303 & Rhythm Machine</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #222;
+      color: #eee;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    .navbar {
+      background: #333;
+      padding: 10px;
+    }
+    .navbar button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .container {
+      display: none;
+      padding: 20px;
+    }
+    .active {
+      display: block;
+    }
+    .control-group {
+      margin: 15px 0;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    input[type="range"],
+    input[type="number"] {
+      width: 300px;
+    }
+    /* TB303パターンシーケンサー用テーブル */
+    table.sequencer {
+      border-collapse: collapse;
+      margin: 0 auto;
+    }
+    table.sequencer th, table.sequencer td {
+      border: 1px solid #555;
+      padding: 5px;
+      text-align: center;
+      min-width: 40px;
+    }
+    table.sequencer button {
+      width: 100%;
+      padding: 5px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    table.sequencer input[type="number"] {
+      width: 40px;
+      text-align: center;
+    }
+    /* リズムマシンのシーケンサー */
+    .sequencerDiv {
+      display: inline-block;
+      margin-top: 20px;
+    }
+    .track {
+      margin-bottom: 10px;
+    }
+    .step {
+      width: 30px;
+      height: 30px;
+      margin: 2px;
+      display: inline-block;
+      background: #555;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .step.active {
+      background: #0f0;
+    }
+    .step.playing {
+      border: 2px solid #fff;
+    }
+    /* スマホ横画面用のレスポンシブ調整 */
+    @media only screen and (max-width: 800px) {
+      body {
+        font-size: 14px;
+      }
+      input[type="range"] {
+        width: 90%;
+      }
+      table.sequencer th, table.sequencer td {
+        min-width: 30px;
+        padding: 3px;
+      }
+    }
+    @media only screen and (orientation: landscape) and (max-width: 800px) {
+      body {
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ナビゲーション -->
+  <div class="navbar">
+    <button id="tb303Btn">TB303</button>
+    <button id="rhythmBtn">Rhythm Machine</button>
+  </div>
+  
+  <!-- TB303 Advanced Synthesizer -->
+  <div id="tb303Container" class="container active">
+    <h1>Advanced TB303 Synthesizer</h1>
+    <div class="control-group">
+      <label for="cutoffSlider">Filter Cutoff</label>
+      <input type="range" id="cutoffSlider" min="100" max="2000" value="800">
+    </div>
+    <div class="control-group">
+      <label for="resonanceSlider">Resonance (Q)</label>
+      <input type="range" id="resonanceSlider" min="0.5" max="20" step="0.1" value="5">
+    </div>
+    <div class="control-group">
+      <label for="envSlider">Envelope Decay (s)</label>
+      <input type="range" id="envSlider" min="0.1" max="2" step="0.1" value="0.5">
+    </div>
+    
+    <!-- TB303 パターンシーケンサー -->
+    <h2>Pattern Sequencer</h2>
+    <table class="sequencer" id="tb303Sequencer">
+      <thead>
+        <tr>
+          <th>Step</th>
+          <th>1</th><th>2</th><th>3</th><th>4</th>
+          <th>5</th><th>6</th><th>7</th><th>8</th>
+          <th>9</th><th>10</th><th>11</th><th>12</th>
+          <th>13</th><th>14</th><th>15</th><th>16</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Note On/Off行 -->
+        <tr>
+          <td>Note</td>
+          <td id="noteCell0"></td>
+          <td id="noteCell1"></td>
+          <td id="noteCell2"></td>
+          <td id="noteCell3"></td>
+          <td id="noteCell4"></td>
+          <td id="noteCell5"></td>
+          <td id="noteCell6"></td>
+          <td id="noteCell7"></td>
+          <td id="noteCell8"></td>
+          <td id="noteCell9"></td>
+          <td id="noteCell10"></td>
+          <td id="noteCell11"></td>
+          <td id="noteCell12"></td>
+          <td id="noteCell13"></td>
+          <td id="noteCell14"></td>
+          <td id="noteCell15"></td>
+        </tr>
+        <!-- Pitch行 -->
+        <tr>
+          <td>Pitch</td>
+          <td id="pitchCell0"></td>
+          <td id="pitchCell1"></td>
+          <td id="pitchCell2"></td>
+          <td id="pitchCell3"></td>
+          <td id="pitchCell4"></td>
+          <td id="pitchCell5"></td>
+          <td id="pitchCell6"></td>
+          <td id="pitchCell7"></td>
+          <td id="pitchCell8"></td>
+          <td id="pitchCell9"></td>
+          <td id="pitchCell10"></td>
+          <td id="pitchCell11"></td>
+          <td id="pitchCell12"></td>
+          <td id="pitchCell13"></td>
+          <td id="pitchCell14"></td>
+          <td id="pitchCell15"></td>
+        </tr>
+        <!-- Accent行 -->
+        <tr>
+          <td>Accent</td>
+          <td id="accentCell0"></td>
+          <td id="accentCell1"></td>
+          <td id="accentCell2"></td>
+          <td id="accentCell3"></td>
+          <td id="accentCell4"></td>
+          <td id="accentCell5"></td>
+          <td id="accentCell6"></td>
+          <td id="accentCell7"></td>
+          <td id="accentCell8"></td>
+          <td id="accentCell9"></td>
+          <td id="accentCell10"></td>
+          <td id="accentCell11"></td>
+          <td id="accentCell12"></td>
+          <td id="accentCell13"></td>
+          <td id="accentCell14"></td>
+          <td id="accentCell15"></td>
+        </tr>
+        <!-- Slide行 -->
+        <tr>
+          <td>Slide</td>
+          <td id="slideCell0"></td>
+          <td id="slideCell1"></td>
+          <td id="slideCell2"></td>
+          <td id="slideCell3"></td>
+          <td id="slideCell4"></td>
+          <td id="slideCell5"></td>
+          <td id="slideCell6"></td>
+          <td id="slideCell7"></td>
+          <td id="slideCell8"></td>
+          <td id="slideCell9"></td>
+          <td id="slideCell10"></td>
+          <td id="slideCell11"></td>
+          <td id="slideCell12"></td>
+          <td id="slideCell13"></td>
+          <td id="slideCell14"></td>
+          <td id="slideCell15"></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="control-group">
+      <button id="playTB303PatternBtn">Play Pattern</button>
+      <button id="stopTB303PatternBtn">Stop Pattern</button>
+      <button id="clearTB303PatternBtn">Clear Pattern</button>
+    </div>
+  </div>
+  
+  <!-- Rhythm Machine -->
+  <div id="rhythmContainer" class="container">
+    <h1>Rhythm Machine</h1>
+    <div class="control-group">
+      <button id="playSeqBtn">Play Sequence</button>
+      <button id="stopSeqBtn">Stop</button>
+    </div>
+    <div class="control-group">
+      <label for="bpmSlider">BPM</label>
+      <input type="range" id="bpmSlider" min="60" max="180" value="120">
+    </div>
+    <div class="sequencerDiv" id="rhythmSequencer">
+      <div class="track" data-track="0">
+        <span>Kick</span><br>
+      </div>
+      <div class="track" data-track="1">
+        <span>Snare</span><br>
+      </div>
+      <div class="track" data-track="2">
+        <span>HiHat</span><br>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // 画面切り替え
+    const tb303Btn = document.getElementById('tb303Btn');
+    const rhythmBtn = document.getElementById('rhythmBtn');
+    const tb303Container = document.getElementById('tb303Container');
+    const rhythmContainer = document.getElementById('rhythmContainer');
+    tb303Btn.addEventListener('click', () => {
+      tb303Container.classList.add('active');
+      rhythmContainer.classList.remove('active');
+    });
+    rhythmBtn.addEventListener('click', () => {
+      rhythmContainer.classList.add('active');
+      tb303Container.classList.remove('active');
+    });
+    
+    // AudioContext の初期化
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+    
+    // TB303 の各種コントロール
+    const cutoffSlider = document.getElementById('cutoffSlider');
+    const resonanceSlider = document.getElementById('resonanceSlider');
+    const envSlider = document.getElementById('envSlider');
+    
+    // TB303 パターンデータ（16ステップ）
+    const numSteps = 16;
+    let tb303Pattern = [];
+    for (let i = 0; i < numSteps; i++) {
+      tb303Pattern[i] = {
+        noteOn: false,
+        pitch: 55,   // MIDIノート（例：55=G3あたり）
+        accent: false,
+        slide: false
+      };
+    }
+    
+    // 各セルのUI初期化（Note, Pitch, Accent, Slide）
+    for (let i = 0; i < numSteps; i++) {
+      // Noteセル
+      let noteCell = document.getElementById('noteCell' + i);
+      let noteBtn = document.createElement('button');
+      noteBtn.textContent = 'Off';
+      noteBtn.dataset.index = i;
+      noteBtn.addEventListener('click', () => {
+        tb303Pattern[i].noteOn = !tb303Pattern[i].noteOn;
+        noteBtn.textContent = tb303Pattern[i].noteOn ? 'On' : 'Off';
+        noteBtn.style.background = tb303Pattern[i].noteOn ? '#0f0' : '';
+      });
+      noteCell.appendChild(noteBtn);
+      
+      // Pitchセル（数値入力）
+      let pitchCell = document.getElementById('pitchCell' + i);
+      let pitchInput = document.createElement('input');
+      pitchInput.type = 'number';
+      pitchInput.value = tb303Pattern[i].pitch;
+      pitchInput.min = 40;
+      pitchInput.max = 80;
+      pitchInput.dataset.index = i;
+      pitchInput.addEventListener('change', () => {
+        tb303Pattern[i].pitch = parseInt(pitchInput.value);
+      });
+      pitchCell.appendChild(pitchInput);
+      
+      // Accentセル
+      let accentCell = document.getElementById('accentCell' + i);
+      let accentBtn = document.createElement('button');
+      accentBtn.textContent = '';
+      accentBtn.dataset.index = i;
+      accentBtn.addEventListener('click', () => {
+        tb303Pattern[i].accent = !tb303Pattern[i].accent;
+        accentBtn.textContent = tb303Pattern[i].accent ? 'A' : '';
+        accentBtn.style.background = tb303Pattern[i].accent ? '#ff0' : '';
+      });
+      accentCell.appendChild(accentBtn);
+      
+      // Slideセル
+      let slideCell = document.getElementById('slideCell' + i);
+      let slideBtn = document.createElement('button');
+      slideBtn.textContent = '';
+      slideBtn.dataset.index = i;
+      slideBtn.addEventListener('click', () => {
+        tb303Pattern[i].slide = !tb303Pattern[i].slide;
+        slideBtn.textContent = tb303Pattern[i].slide ? 'S' : '';
+        slideBtn.style.background = tb303Pattern[i].slide ? '#f80' : '';
+      });
+      slideCell.appendChild(slideBtn);
+    }
+    
+    // TB303 パターン再生処理
+    let tb303Interval;
+    let currentTB303Step = 0;
+    let previousFreq = null;
+    
+    // MIDIノート→周波数変換
+    function midiToFreq(midi) {
+      return 440 * Math.pow(2, (midi - 69) / 12);
+    }
+    
+    function playTB303Note(stepData, startTime) {
+      if (!stepData.noteOn) return;
+      const freq = midiToFreq(stepData.pitch);
+      
+      const osc = audioCtx.createOscillator();
+      osc.type = 'sawtooth';
+      // スライドがONの場合、前の周波数からグライド
+      if (stepData.slide && previousFreq !== null) {
+        osc.frequency.setValueAtTime(previousFreq, startTime);
+        osc.frequency.linearRampToValueAtTime(freq, startTime + 0.1);
+      } else {
+        osc.frequency.setValueAtTime(freq, startTime);
+      }
+      
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      // アクセント時はカットオフを高めに
+      const baseCutoff = parseFloat(cutoffSlider.value);
+      const cutoff = stepData.accent ? baseCutoff * 1.5 : baseCutoff;
+      filter.frequency.setValueAtTime(cutoff, startTime);
+      filter.Q.setValueAtTime(parseFloat(resonanceSlider.value), startTime);
+      
+      const gainNode = audioCtx.createGain();
+      const gainValue = stepData.accent ? 1.2 : 0.8;
+      gainNode.gain.setValueAtTime(0, startTime);
+      
+      osc.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      // エンベロープ処理
+      gainNode.gain.linearRampToValueAtTime(gainValue, startTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + parseFloat(envSlider.value));
+      
+      osc.start(startTime);
+      osc.stop(startTime + parseFloat(envSlider.value));
+      
+      previousFreq = freq;
+    }
+    
+    function playTB303Pattern() {
+      previousFreq = null;
+      const stepDuration = parseFloat(envSlider.value);
+      currentTB303Step = 0;
+      tb303Interval = setInterval(() => {
+        const now = audioCtx.currentTime;
+        playTB303Note(tb303Pattern[currentTB303Step], now);
+        currentTB303Step = (currentTB303Step + 1) % numSteps;
+      }, stepDuration * 1000);
+    }
+    
+    document.getElementById('playTB303PatternBtn').addEventListener('click', () => {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      playTB303Pattern();
+    });
+    document.getElementById('stopTB303PatternBtn').addEventListener('click', () => {
+      clearInterval(tb303Interval);
+    });
+    document.getElementById('clearTB303PatternBtn').addEventListener('click', () => {
+      tb303Pattern.forEach((step, i) => {
+        step.noteOn = false;
+        step.accent = false;
+        step.slide = false;
+        // 各セルのUIリセット
+        document.getElementById('noteCell' + i).firstChild.textContent = 'Off';
+        document.getElementById('noteCell' + i).firstChild.style.background = '';
+        document.getElementById('accentCell' + i).firstChild.textContent = '';
+        document.getElementById('accentCell' + i).firstChild.style.background = '';
+        document.getElementById('slideCell' + i).firstChild.textContent = '';
+        document.getElementById('slideCell' + i).firstChild.style.background = '';
+      });
+    });
+    
+    // リズムマシン実装（従来のシンプルなステップシーケンサー）
+    const playSeqBtn = document.getElementById('playSeqBtn');
+    const stopSeqBtn = document.getElementById('stopSeqBtn');
+    const bpmSlider = document.getElementById('bpmSlider');
+    const rhythmSequencer = document.getElementById('rhythmSequencer');
+    
+    const rhythmTracks = 3;
+    const rhythmSteps = 16;
+    let rhythmData = [];
+    for (let t = 0; t < rhythmTracks; t++) {
+      rhythmData[t] = [];
+      const trackDiv = rhythmSequencer.querySelector('.track[data-track="'+t+'"]');
+      for (let s = 0; s < rhythmSteps; s++) {
+        const stepDiv = document.createElement('div');
+        stepDiv.classList.add('step');
+        stepDiv.dataset.track = t;
+        stepDiv.dataset.step = s;
+        stepDiv.addEventListener('click', () => {
+          stepDiv.classList.toggle('active');
+          rhythmData[t][s] = stepDiv.classList.contains('active');
+        });
+        rhythmData[t][s] = false;
+        trackDiv.appendChild(stepDiv);
+      }
+    }
+    
+    let currentRhythmStep = 0;
+    let rhythmInterval;
+    
+    function playKick(time) {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.frequency.setValueAtTime(150, time);
+      osc.frequency.exponentialRampToValueAtTime(0.001, time + 0.5);
+      gain.gain.setValueAtTime(1, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.5);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(time);
+      osc.stop(time + 0.5);
+    }
+    
+    function playSnare(time) {
+      const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.2, audioCtx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < output.length; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = noiseBuffer;
+      const noiseFilter = audioCtx.createBiquadFilter();
+      noiseFilter.type = 'bandpass';
+      noiseFilter.frequency.setValueAtTime(1000, time);
+      noise.connect(noiseFilter);
+      noiseFilter.connect(audioCtx.destination);
+      noise.start(time);
+    }
+    
+    function playHiHat(time) {
+      const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.05, audioCtx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < output.length; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = noiseBuffer;
+      const noiseFilter = audioCtx.createBiquadFilter();
+      noiseFilter.type = 'highpass';
+      noiseFilter.frequency.setValueAtTime(7000, time);
+      noise.connect(noiseFilter);
+      noiseFilter.connect(audioCtx.destination);
+      noise.start(time);
+    }
+    
+    function playRhythmSequence() {
+      const bpm = parseInt(bpmSlider.value);
+      const interval = (60 / bpm) / 4;
+      currentRhythmStep = 0;
+      rhythmInterval = setInterval(() => {
+        document.querySelectorAll('.step').forEach(step => {
+          if (parseInt(step.dataset.step) === currentRhythmStep) {
+            step.classList.add('playing');
+          } else {
+            step.classList.remove('playing');
+          }
+        });
+        const now = audioCtx.currentTime;
+        rhythmData.forEach((track, t) => {
+          if (track[currentRhythmStep]) {
+            if (t === 0) playKick(now);
+            if (t === 1) playSnare(now);
+            if (t === 2) playHiHat(now);
+          }
+        });
+        currentRhythmStep = (currentRhythmStep + 1) % rhythmSteps;
+      }, interval * 1000);
+    }
+    
+    playSeqBtn.addEventListener('click', () => {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      playRhythmSequence();
+    });
+    stopSeqBtn.addEventListener('click', () => {
+      clearInterval(rhythmInterval);
+      document.querySelectorAll('.step').forEach(step => {
+        step.classList.remove('playing');
+      });
+    });
+  </script>
+</body>
+</html>
